@@ -6,6 +6,7 @@ load_dotenv()
 """
 List of countries url.
 """
+pakistan = 'https://pk.indeed.com'
 nigeria = 'https://ng.indeed.com'
 united_kingdom = 'https://uk.indeed.com'
 united_states = 'https://www.indeed.com'
@@ -37,25 +38,23 @@ ireland = 'https://ie.indeed.com'
 
 def main():
     driver = configure_webdriver()
-    country = united_states
-    sender_email = os.getenv("SENDER_EMAIL")
-    receiver_email = os.getenv("RECEIVER_EMAIL")
-    password = os.getenv("PASSWORD")
+    country = pakistan
     job_position = ''
-    job_location = 'remote'
-    date_posted = 10
+    job_location = 'Bahawalpur'
+    date_posted = 0
 
-    sorted_df = None
-
+    df = None
     try:
         full_url = search_jobs(driver, country, job_position, job_location, date_posted)
-        df = scrape_job_data(driver, country)
+        # it makes files
+        scrape_job_data(driver, country)
+        df = read_job_pages()
 
         if df.shape[0] == 1:
             print("No results found. Something went wrong.")
             subject = 'No Jobs Found on Indeed'
             body = """
-            No jobs were found for the given search criteria.
+            No job_pages were found for the given search criteria.
             Please consider the following:
             1. Try adjusting your search criteria.
             2. If you used English search keywords for non-English speaking countries,
@@ -66,20 +65,17 @@ def main():
             Link {}
             """.format(full_url)
 
-            send_email_empty(sender_email, receiver_email, subject, body, password)
-        else:
-            cleaned_df = clean_data(df)
-            sorted_df = sort_data(cleaned_df)
-            # csv_file = save_csv(sorted_df, job_position, job_location)
     finally:
         try:
-            if sorted_df is not None:
-                send_email(sorted_df, sender_email, receiver_email, job_position, job_location, password)
+            print("hehe")
+            save_csv(df, job_position, job_location)
         except Exception as e:
-            print(f"Error sending email: {e}")
+            print(f"Error saving file: {e}")
         finally:
             pass
+            delete_job_pages_files()
             driver.quit()
+            print("hehe")
 
 
 if __name__ == "__main__":
