@@ -82,7 +82,8 @@ def scrape_job_data(driver, country):
             driver.execute_script("window.open('');")
             driver.switch_to.window(driver.window_handles[1])
             driver.get(link_full)
-            time.sleep(random.uniform(3, 7))
+            # time.sleep(random.uniform(3, 7))
+            time.sleep(10)
             with open(f'job_pages/job_page{count+index}.html', 'w', encoding='utf-8') as f:
                 f.write(BeautifulSoup(driver.page_source, 'lxml').prettify())
 
@@ -144,13 +145,16 @@ def read_job_pages():
             # Extract the job type
             job_type = soup.find('div', {'aria-label': 'Job type'})
             # print(job_type)
-            job_types = [item.get_text(strip=True) for item in job_type.find_all('li')]
-            # print(job_types)
+            if job_type:
+                job_types =[item.get_text(strip=True) for item in job_type.find_all('li')]
+                # print(job_types)
+
+
 
             # Extract the job description
             job_description = soup.find('div', {'id': 'jobDescriptionText'})
             job_description = job_description.text.strip() if job_description else 'N/A'
-            print(job_description)
+            # print(job_description)
 
             date_posted = datetime.now().date()
             # Append the extracted data to the job_data list
@@ -229,16 +233,24 @@ def delete_job_pages_files():
 
 
 def save_csv(df, job_position, job_location):
-    def get_user_desktop_path():
-        home_dir = os.path.expanduser("~")
-        desktop_path = os.path.join(home_dir, "Desktop")
-        return desktop_path
+    # Define the path to save the file
+    def get_fyp_jobs_data_path():
+        # Replace with your desired directory path
+        path = r'C:\My Drive\University\FYP\jobs data'
+        return path
 
-    file_path = os.path.join(get_user_desktop_path(), '{}_{}'.format(job_position, job_location))
-    csv_file = '{}.csv'.format(file_path)
-    df.to_csv('{}.csv'.format(file_path), index=False)
+    # Create the full file path using job_position and job_location
+    file_path = os.path.join(get_fyp_jobs_data_path(), '{}_{}.csv'.format(job_position, job_location))
 
-    return csv_file
+    # Check if the file already exists
+    if os.path.exists(file_path):
+        # If file exists, append the data without writing the header again
+        df.to_csv(file_path, mode='a', header=False, index=False)
+    else:
+        # If the file doesn't exist, create it and write the data with the header
+        df.to_csv(file_path, mode='w', index=False)
+
+    return file_path
 
 
 def generate_attachment_filename(job_title, job_location):

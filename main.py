@@ -37,10 +37,13 @@ ireland = 'https://ie.indeed.com'
 
 
 def main():
+    #issues:
+    # 1. are you a human? check
+    # 2. something missing in results.
     driver = configure_webdriver()
     country = pakistan
     job_position = ''
-    job_location = 'Bahawalpur'
+    job_location = 'Punjab'
     date_posted = 0
 
     df = None
@@ -52,28 +55,16 @@ def main():
 
         if df.shape[0] == 1:
             print("No results found. Something went wrong.")
-            subject = 'No Jobs Found on Indeed'
-            body = """
-            No job_pages were found for the given search criteria.
-            Please consider the following:
-            1. Try adjusting your search criteria.
-            2. If you used English search keywords for non-English speaking countries,
-               it might return an empty result. Consider using keywords in the country's language.
-            3. Try more general keyword(s), check your spelling or replace abbreviations with the entire word
-
-            Feel free to try a manual search with this link and see for yourself:
-            Link {}
-            """.format(full_url)
 
     finally:
         try:
             print("hehe")
             save_csv(df, job_position, job_location)
+            delete_job_pages_files()
         except Exception as e:
             print(f"Error saving file: {e}")
         finally:
             pass
-            delete_job_pages_files()
             driver.quit()
             print("hehe")
 
