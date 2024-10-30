@@ -44,7 +44,7 @@ def main():
     country = pakistan
     job_position = ''
     job_location = 'Punjab'
-    date_posted = 0
+    date_posted = 1
 
     df = None
     try:

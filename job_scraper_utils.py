@@ -10,6 +10,7 @@ from selenium.webdriver.common.by import By
 from selenium_stealth import stealth
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
+import undetected_chromedriver as uc
 
 global total_jobs
 
@@ -18,7 +19,7 @@ def get_random_user_agent():
     user_agents = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:90.0) Gecko/20100101 Firefox/90.0",
-        # Add more user agents here
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
     ]
     return random.choice(user_agents)
 
@@ -27,9 +28,11 @@ def configure_webdriver():
     options = webdriver.ChromeOptions()
     options.add_argument("--start-maximized")
     options.add_argument(f"user-agent={get_random_user_agent()}")
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option('useAutomationExtension', False)
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+    options.add_argument('--disable-popup-blocking')
+    # options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    # options.add_experimental_option('useAutomationExtension', False)
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    driver = uc.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
 
     stealth(driver,
             languages=["en-US", "en"],
@@ -38,6 +41,7 @@ def configure_webdriver():
             webgl_vendor="Intel Inc.",
             renderer="Intel Iris OpenGL Engine",
             fix_hairline=True,
+            run_on_insecure_origins=True
             )
     return driver
 
@@ -47,6 +51,8 @@ def search_jobs(driver, country, job_position, job_location, date_posted):
     print(full_url)
     driver.get(full_url)
     global total_jobs
+    time.sleep(random.uniform(3, 7))
+
     try:
         job_count_element = driver.find_element(By.XPATH,
                                                 '//div[starts-with(@class, "jobsearch-JobCountAndSortPane-jobCount")]')
@@ -57,7 +63,7 @@ def search_jobs(driver, country, job_position, job_location, date_posted):
         print("No job count found")
         total_jobs = "Unknown"
 
-    driver.save_screenshot('screenshot.png')
+    # driver.save_screenshot('screenshot.png')
     return full_url
 
 
@@ -78,12 +84,11 @@ def scrape_job_data(driver, country):
             link_full = country + link
 
             # Open the link in a new tab
-            # Open the link in a new tab
             driver.execute_script("window.open('');")
+            time.sleep(1)
             driver.switch_to.window(driver.window_handles[1])
             driver.get(link_full)
-            # time.sleep(random.uniform(3, 7))
-            time.sleep(10)
+            time.sleep(random.uniform(3, 7))
             with open(f'job_pages/job_page{count+index}.html', 'w', encoding='utf-8') as f:
                 f.write(BeautifulSoup(driver.page_source, 'lxml').prettify())
 
@@ -105,6 +110,7 @@ def scrape_job_data(driver, country):
             time.sleep(random.uniform(2, 5))
 
         except:
+            print("Some Error Occurred")
             break
 
 
