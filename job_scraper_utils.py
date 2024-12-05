@@ -11,9 +11,16 @@ from selenium_stealth import stealth
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 import undetected_chromedriver as uc
+import pygame
 
 global total_jobs
 
+def play_mp3(file_path):
+    pygame.mixer.init()
+    pygame.mixer.music.load(file_path)
+    pygame.mixer.music.play()
+    while pygame.mixer.music.get_busy():  # Wait for the music to finish
+        continue
 
 def get_random_user_agent():
     user_agents = [
@@ -63,7 +70,6 @@ def search_jobs(driver, country, job_position, job_location, date_posted):
         print("No job count found")
         total_jobs = "Unknown"
 
-    # driver.save_screenshot('screenshot.png')
     return full_url
 
 
@@ -89,8 +95,19 @@ def scrape_job_data(driver, country):
             driver.switch_to.window(driver.window_handles[1])
             driver.get(link_full)
             time.sleep(random.uniform(3, 7))
-            with open(f'job_pages/job_page{count+index}.html', 'w', encoding='utf-8') as f:
-                f.write(BeautifulSoup(driver.page_source, 'lxml').prettify())
+
+            # Check if the page contains the desired class
+            try:
+                driver.find_element(By.CLASS_NAME, 'jobsearch-JobInfoHeader-title-container')
+                with open(f'job_pages/job_page{count + index}.html', 'w', encoding='utf-8') as f:
+                    f.write(BeautifulSoup(driver.page_source, 'lxml').prettify())
+            except:
+                # Play a sound and sleep for 10 seconds if the class is not found
+                print("Class not found, sleeping for 10 seconds and playing sound...")
+                play_mp3("police_siren.mp3")
+                time.sleep(10)
+
+
 
             # Close the tab and switch back to the original tab
             driver.close()
@@ -149,19 +166,19 @@ def read_job_pages():
             # print(salary)
 
             # Extract the job type
-            job_type = soup.find('div', {'aria-label': 'Job type'})
-            # print(job_type)
-            if job_type:
-                job_types =[item.get_text(strip=True) for item in job_type.find_all('li')]
-                # print(job_types)
+            job_types = soup.find('div', {'aria-label': 'Job type'})
+            if job_types:
+                job_types =[item.get_text(strip=True) for item in job_types.find_all('li')]
+            else:
+                job_types = []
 
 
 
             # Extract the job description
             job_description = soup.find('div', {'id': 'jobDescriptionText'})
             job_description = job_description.text.strip() if job_description else 'N/A'
-            # print(job_description)
 
+            # will have to change this
             date_posted = datetime.now().date()
             # Append the extracted data to the job_data list
             job_data.append({
@@ -197,52 +214,11 @@ def delete_job_pages_files():
         print(f"Folder '{folder_path}' does not exist.")
 
 
-# def clean_data(df):
-#     def posted(x):
-#         x = x.replace('PostedPosted', '').strip()
-#         x = x.replace('EmployerActive', '').strip()
-#         x = x.replace('PostedToday', '0').strip()
-#         x = x.replace('PostedJust posted', '0').strip()
-#         x = x.replace('today', '0').strip()
-#
-#         return x
-#
-#     def day(x):
-#         x = x.replace('days ago', '').strip()
-#         x = x.replace('day ago', '').strip()
-#         return x
-#
-#     def plus(x):
-#         x = x.replace('+', '').strip()
-#         return x
-#
-#     df['Date Posted'] = df['Date Posted'].apply(posted)
-#     df['Date Posted'] = df['Date Posted'].apply(day)
-#     df['Date Posted'] = df['Date Posted'].apply(plus)
-#
-#     return df
-
-
-# def sort_data(df):
-#     def convert_to_integer(x):
-#         try:
-#             return int(x)
-#         except ValueError:
-#             return float('inf')
-#
-#     df['Date_num'] = df['Date Posted'].apply(lambda x: x[:2].strip())
-#     df['Date_num2'] = df['Date_num'].apply(convert_to_integer)
-#     df.sort_values(by=['Date_num2'], inplace=True)
-#
-#     df = df[['Link', 'Job Title', 'Company', 'Date Posted', 'Location']]
-#     return df
-
-
 def save_csv(df, job_position, job_location):
     # Define the path to save the file
     def get_fyp_jobs_data_path():
         # Replace with your desired directory path
-        path = r'C:\My Drive\University\FYP\jobs data'
+        path = r'C:\Users\huzef\OneDrive\jobs-data'
         return path
 
     # Create the full file path using job_position and job_location
