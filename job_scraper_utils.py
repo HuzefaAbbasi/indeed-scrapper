@@ -58,7 +58,7 @@ def search_jobs(driver, country, job_position, job_location, date_posted):
     print(full_url)
     driver.get(full_url)
     global total_jobs
-    time.sleep(random.uniform(3, 7))
+    time.sleep(120)
 
     try:
         job_count_element = driver.find_element(By.XPATH,
@@ -81,8 +81,13 @@ def scrape_job_data(driver, country):
     while True:
 
         soup = BeautifulSoup(driver.page_source, 'lxml')
-
         boxes = soup.find_all('div', class_='job_seen_beacon')
+
+        if not boxes:  # If no job boxes are found
+            print("Main page problem, playing siren...")
+            play_mp3("police_siren.mp3")
+            time.sleep(10)
+            continue
 
         for index, box in enumerate(boxes):
             # Get the link to the full job page
@@ -99,16 +104,14 @@ def scrape_job_data(driver, country):
             # Check if the page contains the desired class
             try:
                 driver.find_element(By.CLASS_NAME, 'jobsearch-JobInfoHeader-title-container')
-                with open(f'job_pages/job_page{count + index}.html', 'w', encoding='utf-8') as f:
-                    f.write(BeautifulSoup(driver.page_source, 'lxml').prettify())
             except:
                 # Play a sound and sleep for 10 seconds if the class is not found
                 print("Class not found, sleeping for 10 seconds and playing sound...")
                 play_mp3("police_siren.mp3")
                 time.sleep(10)
 
-
-
+            with open(f'job_pages/job_page{count + index}.html', 'w', encoding='utf-8') as f:
+                f.write(BeautifulSoup(driver.page_source, 'lxml').prettify())
             # Close the tab and switch back to the original tab
             driver.close()
             driver.switch_to.window(driver.window_handles[0])
@@ -121,6 +124,15 @@ def scrape_job_data(driver, country):
 
         try:
             next_page = soup.find('a', {'aria-label': 'Next Page'}).get('href')
+
+            if not next_page:
+                print("Next page not found, playing sound...")
+                play_mp3("police_siren.mp3")
+                time.sleep(10)
+
+                # Reload the current page's source and try to find the next page link again
+                soup = BeautifulSoup(driver.page_source, 'lxml')
+                next_page = soup.find('a', {'aria-label': 'Next Page'}).get('href')
 
             next_page = country + next_page
             driver.get(next_page)
