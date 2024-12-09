@@ -58,7 +58,7 @@ def search_jobs(driver, country, job_position, job_location, date_posted):
     print(full_url)
     driver.get(full_url)
     global total_jobs
-    time.sleep(120)
+    time.sleep(20)
 
     try:
         job_count_element = driver.find_element(By.XPATH,
